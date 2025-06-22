@@ -5,6 +5,17 @@ from typing import Optional, List
 
 from fastapi import HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api.proxies import WebshareProxyConfig
+
+ytt_api = YouTubeTranscriptApi(
+    proxy_config=WebshareProxyConfig(
+        proxy_username="ighucnux",
+        proxy_password="arb7pnzlw1b3",
+    )
+)
+
+# all requests done by ytt_api will now be proxied through Webshare
+ytt_api.fetch(video_id)
 
 class YouTubeTools:
     @staticmethod
