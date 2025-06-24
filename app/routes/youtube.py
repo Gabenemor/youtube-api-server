@@ -29,3 +29,4 @@ async def get_video_timestamps(request: YouTubeRequest):
 async def get_video_segments(request: YouTubeRequest):
     """Endpoint to get caption segments with timestamps"""
     return YouTubeTools.get_caption_segments(request.url, request.languages)
+
