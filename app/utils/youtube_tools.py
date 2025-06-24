@@ -121,3 +121,29 @@ class YouTubeTools:
             return timestamps
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error generating timestamps: {str(e)}")
+
+    @staticmethod
+    def get_caption_segments(url: str, languages: Optional[List[str]] = None) -> List[dict]:
+        """Return the video transcript as a list of {start, text} objects."""
+        if not url:
+            raise HTTPException(status_code=400, detail="No URL provided")
+    
+        try:
+            video_id = YouTubeTools.get_youtube_video_id(url)
+            if not video_id:
+                raise HTTPException(status_code=400, detail="Invalid YouTube URL")
+        except Exception:
+            raise HTTPException(status_code=400, detail="Error getting video ID from URL")
+    
+        try:
+            captions = YouTubeTranscriptApi.get_transcript(video_id, languages=languages or ["en"])
+            segments = [
+                {
+                    "start": round(line["start"], 2),  # actual timestamp
+                    "text": line["text"]
+                }
+                for line in captions
+            ]
+            return segments
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error fetching captions: {str(e)}")
