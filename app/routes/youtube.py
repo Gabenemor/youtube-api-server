@@ -26,13 +26,8 @@ async def get_video_timestamps(request: YouTubeRequest):
 
 
 @router.post("/video-segments")
-async def get_video_segments(request: YouTubeRequest):
-    """Endpoint to get caption segments with timestamps"""
-    return YouTubeTools.get_caption_segments(request.url, request.languages)
-
-@router.post("/video-summary")
 async def get_caption_segments(request: YouTubeRequest):
-    """Endpoint to get captions with timestamps"""
+    """Endpoint to get caption segments with timestamps"""
     return YouTubeTools.get_caption_segments(request.url, request.languages)
 
 
