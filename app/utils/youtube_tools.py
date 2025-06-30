@@ -13,7 +13,8 @@ ytt_api = YouTubeTranscriptApi(
         proxy_password="MLf8p3R6DEHu7",
     )
 )
-
+# all requests done by ytt_api will now be proxied through Webshare
+ytt_api.fetch(video_id)
 
 class YouTubeTools:
     @staticmethod
