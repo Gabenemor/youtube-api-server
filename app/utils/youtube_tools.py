@@ -14,7 +14,6 @@ ytt_api = YouTubeTranscriptApi(
     )
 )
 # all requests done by ytt_api will now be proxied through Webshare
-ytt_api.fetch(video_id)
 
 class YouTubeTools:
     @staticmethod
@@ -51,7 +50,7 @@ class YouTubeTools:
         try:
             params = {"format": "json", "url": f"https://www.youtube.com/watch?v={video_id}"}
             oembed_url = "https://www.youtube.com/oembed"
-            query_string = urlencode(params )
+            query_string = urlencode(params)
             full_url = oembed_url + "?" + query_string
 
             with urlopen(full_url) as response:
@@ -89,9 +88,9 @@ class YouTubeTools:
         try:
             captions = None
             if languages:
-                captions = ytt_api.get_transcript(video_id, languages=languages)
+                captions = YouTubeTranscriptApi.get_transcript(video_id, languages=languages)
             else:
-                captions = ytt_api.get_transcript(video_id)
+                captions = YouTubeTranscriptApi.get_transcript(video_id)
             
             if captions:
                 return " ".join(line["text"] for line in captions)
@@ -100,8 +99,8 @@ class YouTubeTools:
             raise HTTPException(status_code=500, detail=f"Error getting captions for video: {str(e)}")
 
     @staticmethod
-    def get_video_timestamps(url: str, languages: Optional[List[str]] = None) -> str:
-        """Generate timestamps for a YouTube video based on captions and return as a JSON string with markdown formatting."""
+    def get_video_timestamps(url: str, languages: Optional[List[str]] = None) -> List[str]:
+        """Generate timestamps for a YouTube video based on captions."""
         if not url:
             raise HTTPException(status_code=400, detail="No URL provided")
 
@@ -113,42 +112,12 @@ class YouTubeTools:
             raise HTTPException(status_code=400, detail="Error getting video ID from URL")
 
         try:
-            captions = ytt_api.get_transcript(video_id, languages=languages or ["en"])
-            markdown_output = []
+            captions = YouTubeTranscriptApi.get_transcript(video_id, languages=languages or ["en"])
+            timestamps = []
             for line in captions:
-                start_seconds = int(line["start"])
-                hours = start_seconds // 3600
-                minutes = (start_seconds % 3600) // 60
-                seconds = start_seconds % 60
-                timestamp = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-                markdown_output.append(f"- {timestamp} {line["text"]}")
-            return json.dumps({"transcript": "\n".join(markdown_output)})
+                start = int(line["start"])
+                minutes, seconds = divmod(start, 60)
+                timestamps.append(f"{minutes}:{seconds:02d} - {line['text']}")
+            return timestamps
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error generating timestamps: {str(e)}")
-
-    @staticmethod
-    def get_caption_segments(url: str, languages: Optional[List[str]] = None) -> str:
-        """Get captions with timestamps for a YouTube video and return as a JSON string with markdown formatting."""
-        if not url:
-            raise HTTPException(status_code=400, detail="No URL provided")
-
-        try:
-            video_id = YouTubeTools.get_youtube_video_id(url)
-            if not video_id:
-                raise HTTPException(status_code=400, detail="Invalid YouTube URL")
-        except Exception:
-            raise HTTPException(status_code=400, detail="Error getting video ID from URL")
-
-        try:
-            captions = ytt_api.get_transcript(video_id, languages=languages or ["en"])
-            markdown_output = []
-            for line in captions:
-                start_seconds = int(line["start"])
-                hours = start_seconds // 3600
-                minutes = (start_seconds % 3600) // 60
-                seconds = start_seconds % 60
-                timestamp = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-                markdown_output.append(f"- {timestamp} {line["text"]}")
-            return json.dumps({"transcript": "\n".join(markdown_output)})
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error fetching caption segments: {str(e)}")
