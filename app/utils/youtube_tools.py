@@ -7,18 +7,18 @@ from fastapi import HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.proxies import WebshareProxyConfig
 
+# ✅ Create a ytt_api instance that uses Webshare rotating residential proxy
 ytt_api = YouTubeTranscriptApi(
     proxy_config=WebshareProxyConfig(
         proxy_username="keyvidai-rotate",
         proxy_password="MLf8p3R6DEHu7",
     )
 )
-# all requests done by ytt_api will now be proxied through Webshare
+# All requests through this instance will rotate IPs via Webshare
 
 class YouTubeTools:
     @staticmethod
     def get_youtube_video_id(url: str) -> Optional[str]:
-        """Function to get the video ID from a YouTube URL."""
         parsed_url = urlparse(url)
         hostname = parsed_url.hostname
 
@@ -36,7 +36,6 @@ class YouTubeTools:
 
     @staticmethod
     def get_video_data(url: str) -> dict:
-        """Function to get video data from a YouTube URL."""
         if not url:
             raise HTTPException(status_code=400, detail="No URL provided")
 
@@ -74,7 +73,6 @@ class YouTubeTools:
 
     @staticmethod
     def get_video_captions(url: str, languages: Optional[List[str]] = None) -> str:
-        """Get captions from a YouTube video."""
         if not url:
             raise HTTPException(status_code=400, detail="No URL provided")
 
@@ -86,21 +84,20 @@ class YouTubeTools:
             raise HTTPException(status_code=400, detail="Error getting video ID from URL")
 
         try:
-            captions = None
+            # ✅ Changed to use proxy-configured ytt_api instance
             if languages:
-                captions = YouTubeTranscriptApi.get_transcript(video_id, languages=languages)
+                captions = ytt_api.fetch(video_id, languages=languages)
             else:
-                captions = YouTubeTranscriptApi.get_transcript(video_id)
-            
+                captions = ytt_api.fetch(video_id)
+
             if captions:
-                return " ".join(line["text"] for line in captions)
+                return " ".join(snippet.text for snippet in captions)
             return "No captions found for video"
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error getting captions for video: {str(e)}")
 
     @staticmethod
     def get_video_timestamps(url: str, languages: Optional[List[str]] = None) -> List[str]:
-        """Generate timestamps for a YouTube video based on captions."""
         if not url:
             raise HTTPException(status_code=400, detail="No URL provided")
 
@@ -112,12 +109,13 @@ class YouTubeTools:
             raise HTTPException(status_code=400, detail="Error getting video ID from URL")
 
         try:
-            captions = YouTubeTranscriptApi.get_transcript(video_id, languages=languages or ["en"])
+            # ✅ Changed to use proxy-configured ytt_api instance
+            captions = ytt_api.fetch(video_id, languages=languages or ["en"])
             timestamps = []
-            for line in captions:
-                start = int(line["start"])
+            for snippet in captions:
+                start = int(snippet.start)
                 minutes, seconds = divmod(start, 60)
-                timestamps.append(f"{minutes}:{seconds:02d} - {line['text']}")
+                timestamps.append(f"{minutes}:{seconds:02d} - {snippet.text}")
             return timestamps
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error generating timestamps: {str(e)}")
