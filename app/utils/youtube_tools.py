@@ -9,7 +9,7 @@ from youtube_transcript_api.proxies import WebshareProxyConfig
 
 ytt_api = YouTubeTranscriptApi(
     proxy_config=WebshareProxyConfig(
-        proxy_username="keyvidai",
+        proxy_username="keyvidai-rotate",
         proxy_password="MLf8p3R6DEHu7",
     )
 )
