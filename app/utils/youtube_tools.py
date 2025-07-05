@@ -10,7 +10,7 @@ from youtube_transcript_api.proxies import WebshareProxyConfig
 # ✅ Create a ytt_api instance that uses Webshare rotating residential proxy
 ytt_api = YouTubeTranscriptApi(
     proxy_config=WebshareProxyConfig(
-        proxy_username="keyvidai-rotate",
+        proxy_username="keyvidai",
         proxy_password="MLf8p3R6DEHu7",
     )
 )
