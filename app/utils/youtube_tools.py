@@ -1,3 +1,5 @@
+# ✅ FULLY UPDATED YOUTUBE TOOLS WITH MONKEY PATCHING
+
 import json
 from urllib.parse import urlparse, parse_qs, urlencode
 from urllib.request import urlopen
@@ -5,17 +7,40 @@ from typing import Optional, List
 
 from fastapi import HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api.proxies import WebshareProxyConfig
+import requests
+import types
 
-# ✅ Create a ytt_api instance that uses Webshare rotating residential proxy
-ytt_api = YouTubeTranscriptApi(
-    proxy_config=WebshareProxyConfig(
-        proxy_username="keyvidai",
-        proxy_password="MLf8p3R6DEHu7",
+# ✅ Proxy setup
+def get_proxy():
+    return {
+        "http": "http://keyvidai-rotate:MLf8p3R6DEHu7@p.webshare.io:80/",
+        "https": "http://keyvidai-rotate:MLf8p3R6DEHu7@p.webshare.io:80/"
+    }
+
+# ✅ Monkey patching the internal transcript fetch to use proxy
+def patched_get_raw_transcript(self, video_id, proxies=None, cookies=None, params=None):
+    url = f"https://www.youtube.com/api/timedtext?{params}"
+    response = requests.get(
+        url,
+        proxies=get_proxy(),
+        headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+        },
+        timeout=10
     )
-)
-# All requests through this instance will rotate IPs via Webshare
 
+    if response.status_code != 200:
+        raise Exception(f"Failed to fetch transcript. Status code: {response.status_code}, body: {response.text}")
+
+    return response.text
+
+# ✅ Apply the patch
+YouTubeTranscriptApi._get_raw_transcript = types.MethodType(patched_get_raw_transcript, YouTubeTranscriptApi)
+
+# ✅ Create a basic ytt_api instance (no need for WebshareProxyConfig)
+ytt_api = YouTubeTranscriptApi()
+
+# ✅ YouTubeTools class
 class YouTubeTools:
     @staticmethod
     def get_youtube_video_id(url: str) -> Optional[str]:
@@ -84,7 +109,6 @@ class YouTubeTools:
             raise HTTPException(status_code=400, detail="Error getting video ID from URL")
 
         try:
-            # ✅ Changed to use proxy-configured ytt_api instance
             if languages:
                 captions = ytt_api.fetch(video_id, languages=languages)
             else:
@@ -109,7 +133,6 @@ class YouTubeTools:
             raise HTTPException(status_code=400, detail="Error getting video ID from URL")
 
         try:
-            # ✅ Changed to use proxy-configured ytt_api instance
             captions = ytt_api.fetch(video_id, languages=languages or ["en"])
             timestamps = []
             for snippet in captions:
