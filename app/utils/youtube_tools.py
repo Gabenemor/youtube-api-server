@@ -1,4 +1,4 @@
-# ✅ FULLY UPDATED YOUTUBE TOOLS WITH MONKEY PATCHING
+# ✅ UPDATED YOUTUBE TOOLS WITH PROXY ROUTING USING WEBSHARE (OFFICIAL METHOD)
 
 import json
 from urllib.parse import urlparse, parse_qs, urlencode
@@ -7,37 +7,26 @@ from typing import Optional, List
 
 from fastapi import HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi
-import requests
+from youtube_transcript_api._utils import _get_raw_transcript
 import types
 
-# ✅ Proxy setup
-def get_proxy():
-    return {
-        "http": "http://keyvidai-rotate:MLf8p3R6DEHu7@p.webshare.io:80/",
-        "https": "http://keyvidai-rotate:MLf8p3R6DEHu7@p.webshare.io:80/"
-    }
+# ✅ Import the proxy-enabled GET method
+from app.utils.proxy_requests import proxy_get
 
-# ✅ Monkey patching the internal transcript fetch to use proxy
+# ✅ Monkey-patch youtube-transcript-api to use our proxy in all requests
 def patched_get_raw_transcript(self, video_id, proxies=None, cookies=None, params=None):
     url = f"https://www.youtube.com/api/timedtext?{params}"
-    response = requests.get(
-        url,
-        proxies=get_proxy(),
-        headers={
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-        },
-        timeout=10
-    )
+    response = proxy_get(url)
 
     if response.status_code != 200:
         raise Exception(f"Failed to fetch transcript. Status code: {response.status_code}, body: {response.text}")
 
     return response.text
 
-# ✅ Apply the patch
+# ✅ Apply the patch to the library
 YouTubeTranscriptApi._get_raw_transcript = types.MethodType(patched_get_raw_transcript, YouTubeTranscriptApi)
 
-# ✅ Create a basic ytt_api instance (no need for WebshareProxyConfig)
+# ✅ Create transcript API instance
 ytt_api = YouTubeTranscriptApi()
 
 # ✅ YouTubeTools class
